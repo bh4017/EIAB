@@ -48,7 +48,6 @@ void BSP_Init(void)
         Error_Handler();
     }
 
-
 }
 
 /*
