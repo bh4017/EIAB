@@ -20,15 +20,16 @@
 #define BSP_H
 
 /** INCLUDES -------------------------------------------------------------- **/
-#include "stm32g4xx_hal.h"
+#include "core.h"
+
 
 /** TYPEDEFS -------------------------------------------------------------- **/
 
 /** DEFINES --------------------------------------------------------------- **/
 
 /** PUBLIC FUNCTION PROTOTYPES -------------------------------------------- **/
-
-
+void BSP_Init(void);
+void BSP_SetBlinkyLED(ON_OFF_STATUS status);
 
 
 

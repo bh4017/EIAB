@@ -20,6 +20,8 @@
 
 /** INCLUDES -------------------------------------------------------------- **/
 #include "bsp.h"
+#include "gpio.h"
+#include "stm32g4xx_hal.h"
 
 /** TYPEDEFS -------------------------------------------------------------- **/
 
@@ -33,6 +35,18 @@ void BSP_Error_Handler(void);
 
 
 
+void BSP_SetBlinkyLED(ON_OFF_STATUS status)
+{
+    if(status == ON)
+    {
+        LL_GPIO_SetOutputPin(DO_BLINK_LED_PRT, DO_BLINK_LED_PIN);
+    }
+    else
+    {
+        LL_GPIO_ResetOutputPin(DO_BLINK_LED_PRT, DO_BLINK_LED_PIN);
+    }
+}
+
 
 /*
  ******************************************************************************
@@ -42,11 +56,18 @@ void BSP_Error_Handler(void);
 */
 void BSP_Init(void)
 {
-    // Initialise HAL
+    /* INIT HAL */
     if(HAL_Init() != HAL_OK)
     {
         BSP_Error_Handler();
     }
+
+    /* CONFIGURE SYSTEM CLOCK */
+    SystemClock_Config();
+
+    /* INITIALISE PERIPHERALS */
+    GPIO_Init();
+
 }
 
 /*
@@ -60,11 +81,13 @@ void SystemClock_Config(void)
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-    /** Configure the main internal regulator output voltage **/
+    /** Configure the main internal regulator output voltage
+    */
     HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1_BOOST);
 
     /** Initializes the RCC Oscillators according to the specified parameters
-      in the RCC_OscInitTypeDef structure. **/
+    * in the RCC_OscInitTypeDef structure.
+    */
     RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
     RCC_OscInitStruct.HSIState = RCC_HSI_ON;
     RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
@@ -80,19 +103,21 @@ void SystemClock_Config(void)
         BSP_Error_Handler();
     }
 
-    /** Initializes the CPU, AHB and APB buses clocks **/
+    /** Initializes the CPU, AHB and APB buses clocks
+    */
     RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                                |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
     RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
     RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
     RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
     RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
     {
         BSP_Error_Handler();
     }
 }
+
 
 /*
  ******************************************************************************

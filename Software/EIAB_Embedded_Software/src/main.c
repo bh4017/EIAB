@@ -18,7 +18,9 @@
 
 
 /* INCLUDES ---------------------------------------------------------------- */
-
+#include "main.h"
+#include "bsp.h"
+#include "stm32g4xx_hal.h"
 /* TYPEDEFS ---------------------------------------------------------------- */
 
 /* DEFINES ----------------------------------------------------------------- */
@@ -42,9 +44,13 @@
 */
 int main(void)
 {
+    BSP_Init();
     while (1)
     {
-
+        HAL_Delay(500);
+        BSP_SetBlinkyLED(ON);
+        HAL_Delay(500);
+        BSP_SetBlinkyLED(OFF);
     }
 }
 
