@@ -29,4 +29,16 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>app</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>app/core</name>
+			<type>2</type>
+			<location>C:/Users/brian/git/bh4017/EIAB/Software/EIAB_Embedded_Software/src</location>
+		</link>
+	</linkedResources>
 </projectDescription>
