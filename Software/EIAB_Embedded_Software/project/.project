@@ -40,5 +40,15 @@
 			<type>2</type>
 			<location>C:/Users/brian/git/bh4017/EIAB/Software/EIAB_Embedded_Software/src</location>
 		</link>
+		<link>
+			<name>app/lib</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>app/lib/qpc</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
 	</linkedResources>
 </projectDescription>
