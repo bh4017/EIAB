@@ -9,6 +9,10 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
+-include app/lib/qpc/qv_port/subdir.mk
+-include app/lib/qpc/qv/subdir.mk
+-include app/lib/qpc/qp/subdir.mk
+-include app/lib/qpc/inc/subdir.mk
 -include app/core/system/subdir.mk
 -include app/core/startup/subdir.mk
 -include app/core/subdir.mk

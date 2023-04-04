@@ -25,4 +25,8 @@ Drivers/STM32G4xx_HAL_Driver/Src \
 app/core \
 app/core/startup \
 app/core/system \
+app/lib/qpc/inc \
+app/lib/qpc/qp \
+app/lib/qpc/qv \
+app/lib/qpc/qv_port \
 
