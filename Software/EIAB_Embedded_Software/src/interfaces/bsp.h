@@ -21,12 +21,13 @@
 
 /** INCLUDES -------------------------------------------------------------- **/
 #include "core.h"
-
+#include "qpc.h"
 
 /** TYPEDEFS -------------------------------------------------------------- **/
-
+extern QTicker ticker0_10ms; /* ticker active object for tick rate 0 1ms*/
+extern QTicker ticker1_10us; /* ticker active object for tick rate 1 1us*/
 /** DEFINES --------------------------------------------------------------- **/
-
+#define BSP_TICKS_PER_SEC 100
 /** PUBLIC FUNCTION PROTOTYPES -------------------------------------------- **/
 void BSP_Init(void);
 void BSP_SetBlinkyLED(ON_OFF_STATUS status);

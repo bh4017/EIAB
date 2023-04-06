@@ -51,24 +51,34 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
-			<name>app/lib/qpc/inc</name>
+			<name>app/lib/qpc/include</name>
 			<type>2</type>
 			<location>C:/Users/brian/git/bh4017/EIAB/Software/EIAB_Embedded_Software/.libs/QP/include</location>
-		</link>
-		<link>
-			<name>app/lib/qpc/qp</name>
-			<type>2</type>
-			<location>C:/Users/brian/git/bh4017/EIAB/Software/EIAB_Embedded_Software/.libs/QP/src/qf</location>
-		</link>
-		<link>
-			<name>app/lib/qpc/qv</name>
-			<type>2</type>
-			<location>C:/Users/brian/git/bh4017/EIAB/Software/EIAB_Embedded_Software/.libs/QP/src/qv</location>
 		</link>
 		<link>
 			<name>app/lib/qpc/qv_port</name>
 			<type>2</type>
 			<location>C:/Users/brian/git/bh4017/EIAB/Software/EIAB_Embedded_Software/.libs/QP/ports/arm-cm/qv/gnu</location>
+		</link>
+		<link>
+			<name>app/lib/qpc/src</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>app/lib/qpc/src/qf</name>
+			<type>2</type>
+			<location>C:/Users/brian/git/bh4017/EIAB/Software/EIAB_Embedded_Software/.libs/QP/src/qf</location>
+		</link>
+		<link>
+			<name>app/lib/qpc/src/qs</name>
+			<type>2</type>
+			<location>C:/Users/brian/git/bh4017/EIAB/Software/EIAB_Embedded_Software/.libs/QP/src/qs</location>
+		</link>
+		<link>
+			<name>app/lib/qpc/src/qv</name>
+			<type>2</type>
+			<location>C:/Users/brian/git/bh4017/EIAB/Software/EIAB_Embedded_Software/.libs/QP/src/qv</location>
 		</link>
 	</linkedResources>
 </projectDescription>

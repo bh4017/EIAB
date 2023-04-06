@@ -22,15 +22,39 @@
 #include "bsp.h"
 #include "gpio.h"
 #include "stm32g4xx_hal.h"
+#include "qpc.h"
+
+Q_DEFINE_THIS_FILE
 
 /** TYPEDEFS -------------------------------------------------------------- **/
 
 /** DEFINES --------------------------------------------------------------- **/
 
+/** QSPY ------------------------------------------------------------------ **/
+#ifdef Q_SPY
+    QSTimeCtr QS_tickTime_;
+    QSTimeCtr QS_tickPeriod_;
+
+    /* QSpy source IDs */
+    static QSpyId const l_SysTick_Handler = { 0U };
+
+    enum AppRecords
+    {
+        /* application-specific trace records */
+        MY_STAT = QS_USER
+    };
+
+#endif
+
+/** VARS ------------------------------------------------------------------ **/
+QTicker ticker0_10ms; // ticker active object for tick rate 0 10ms
+//QTicker ticker1_10us; // ticker active object for tick rate 1 10us
+
 /** PRIVATE FUNCTION PROTOTYPES ------------------------------------------- **/
 void SystemClock_Config(void);
 void BSP_Error_Handler(void);
-
+void SysTick_Handler(void);
+void USART2_IRQHandler(void);
 
 
 
@@ -131,4 +155,112 @@ void BSP_Error_Handler(void)
     {
         //TODO: Implement error handler
     }
+}
+
+
+/*
+ ******************************************************************************
+ * @brief  QF_onStartup - executes once, on startup of QF
+ * @retval None
+ ******************************************************************************
+*/
+void QF_onStartup(void)
+{
+    /* set up the SysTick timer to fire at BSP_TICKS_PER_SEC rate */
+    SysTick_Config(SystemCoreClock / BSP_TICKS_PER_SEC);
+
+    /* set priorities of ALL ISRs used in the system, see NOTE00
+    *
+    * !!!!!!!!!!!!!!!!!!!!!!!!!!!! CAUTION !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    * Assign a priority to EVERY ISR explicitly by calling NVIC_SetPriority().
+    * DO NOT LEAVE THE ISR PRIORITIES AT THE DEFAULT VALUE!
+    */
+    NVIC_SetPriority(USART2_IRQn,    0U); /* kernel UNAWARE interrupt */
+    NVIC_SetPriority(SysTick_IRQn,   QF_AWARE_ISR_CMSIS_PRI + 1U);
+    /* ... */
+
+    /* enable IRQs... */
+    //NVIC_EnableIRQ(EXTI0_1_IRQn);
+#ifdef Q_SPY
+    NVIC_EnableIRQ(USART2_IRQn); /* UART2 interrupt used for QS-RX */
+#endif
+}
+
+/*
+ ******************************************************************************
+ * @brief  QV_onIdle - executes during QV idle time
+ * @retval None
+ ******************************************************************************
+*/
+void QV_onIdle(void)
+{
+    /* called with interrupts disabled, see NOTE01 */
+
+
+#ifdef Q_SPY
+    QF_INT_ENABLE();
+    QS_rxParse();  /* parse all the received bytes */
+
+    if ((USART2->ISR & (1U << 7)) != 0) {  /* is TXE empty? */
+        uint16_t b;
+
+        QF_INT_DISABLE();
+        b = QS_getByte();
+        QF_INT_ENABLE();
+
+        if (b != QS_EOD) {  /* not End-Of-Data? */
+            USART2->TDR = (b & 0xFFU);  /* put into the DR register */
+        }
+    }
+
+#else
+    QF_INT_ENABLE(); /* just enable interrupts */
+#endif
+}
+
+Q_NORETURN Q_onAssert(char const * const module, int_t const loc)
+{
+
+    (void)module;
+    (void)loc;
+    QS_ASSERTION(module, loc, 10000U); /* report assertion to QS */
+
+    while(1); //TODO: Add an assertion handler here
+    //NVIC_SystemReset();
+}
+
+
+/*
+ ******************************************************************************
+ * @brief  QF_onCleanup - QP Framework cleanup
+ * @retval None
+ ******************************************************************************
+*/
+void QF_onCleanup(void)
+{
+}
+
+/*
+ ******************************************************************************
+ * @brief  SysTick_Handler - handles the Systick
+ * @retval None
+ ******************************************************************************
+*/
+void SysTick_Handler(void)
+{
+    /* system clock tick ISR */
+    HAL_IncTick();
+
+#ifdef Q_SPY
+    {
+        tmp = SysTick->CTRL; /* clear CTRL_COUNTFLAG */
+        QS_tickTime_ += QS_tickPeriod_; /* account for the clock rollover */
+    }
+#endif
+
+    QF_TICK_X(0U, &l_SysTick_Handler); /* process time events for rate 0 */
+    QACTIVE_POST(&ticker0_10ms.super, 0, &l_SysTick_Handler); /* post to Ticker0 */
+
+
+    QV_ARM_ERRATUM_838869();
 }

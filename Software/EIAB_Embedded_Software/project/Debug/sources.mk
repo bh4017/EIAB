@@ -22,11 +22,12 @@ C_DEPS :=
 # Every subdirectory with source files must be described here
 SUBDIRS := \
 Drivers/STM32G4xx_HAL_Driver/Src \
+app/core/aos \
 app/core \
 app/core/startup \
 app/core/system \
-app/lib/qpc/inc \
-app/lib/qpc/qp \
-app/lib/qpc/qv \
+app/lib/qpc/include \
 app/lib/qpc/qv_port \
+app/lib/qpc/src/qf \
+app/lib/qpc/src/qv \
 

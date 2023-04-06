@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model version="5.1.4" links="0">
+ <framework name="qpc"/>
+ <package name="Shared" stereotype="0x01">
+  <attribute name="AO_Blinky" type="QActive* const" visibility="0x00" properties="0x00">
+   <documentation>/* opaque AO pointer */</documentation>
+   <code>= &amp;Blinky_inst.super;</code>
+  </attribute>
+  <operation name="Blinky_ctor_call" type="void" visibility="0x00" properties="0x00">
+   <code>Blinky_ctor(&amp;Blinky_inst);</code>
+  </operation>
+ </package>
+ <package name="AOs" stereotype="0x02">
+  <class name="Blinky" superclass="qpc::QActive">
+   <attribute name="inst" type="Blinky" visibility="0x00" properties="0x01">
+    <documentation>static instance (Singleton)</documentation>
+   </attribute>
+   <attribute name="timeEvt" type="QTimeEvt" visibility="0x02" properties="0x00"/>
+   <operation name="ctor" type="void" visibility="0x00" properties="0x00">
+    <code>QActive_ctor(&amp;me-&gt;super, Q_STATE_CAST(&amp;Blinky_initial));
+QTimeEvt_ctorX(&amp;me-&gt;timeEvt, &amp;me-&gt;super, TIMEOUT_SIG, 0U);</code>
+   </operation>
+   <statechart properties="0x01">
+    <initial target="../1">
+     <initial_glyph conn="2,6,5,3,6">
+      <action box="0,-2,10,2"/>
+     </initial_glyph>
+    </initial>
+    <state name="active">
+     <entry brief="Arm_Timeout">QTimeEvt_armX(&amp;me-&gt;timeEvt,
+    BSP_TICKS_PER_SEC,
+    BSP_TICKS_PER_SEC);</entry>
+     <initial target="../1">
+      <initial_glyph conn="10,12,5,3,4">
+       <action box="0,-2,10,2"/>
+      </initial_glyph>
+     </initial>
+     <state name="off">
+      <entry brief="Blinky_OFF">BSP_SetBlinkyLED(OFF);</entry>
+      <tran trig="TIMEOUT" target="../../2">
+       <tran_glyph conn="14,16,3,1,22,10,-2">
+        <action box="0,-2,16,2"/>
+       </tran_glyph>
+      </tran>
+      <state_glyph node="14,10,20,10">
+       <entry box="1,2,13,2"/>
+      </state_glyph>
+     </state>
+     <state name="on">
+      <entry brief="Blinky_ON">BSP_SetBlinkyLED(ON);</entry>
+      <tran trig="TIMEOUT" target="../../1">
+       <tran_glyph conn="14,30,3,1,24,-18,-4">
+        <action box="0,-2,10,2"/>
+       </tran_glyph>
+      </tran>
+      <state_glyph node="14,24,20,10">
+       <entry box="1,2,11,2"/>
+      </state_glyph>
+     </state>
+     <state_glyph node="8,4,34,34">
+      <entry box="1,2,15,2"/>
+     </state_glyph>
+    </state>
+    <state_diagram size="80,50"/>
+   </statechart>
+  </class>
+ </package>
+ <directory name="..\src\aos">
+  <file name="blinky.c">
+   <text>#include &quot;qpc.h&quot;    // QP/C framework API
+#include &quot;bsp.h&quot;    // Board Support Package interface
+#include &quot;core.h&quot;
+#include &quot;qmodel.h&quot;
+
+Q_DEFINE_THIS_FILE
+
+/* local objects -----------------------------------------------------------*/
+$declare${AOs::Blinky}
+
+/* Public-scope objects ----------------------------------------------------*/
+$define${Shared::AO_Blinky}
+
+/* Active object definition ================================================*/
+$define${Shared::Blinky_ctor_call}
+$define${AOs::Blinky}</text>
+  </file>
+  <file name="qmodel.h">
+   <text>#ifndef QMODEL_H
+#define QMODEL_H
+
+/* define the event signals used in the application ------------------------*/
+enum QModelSignals 
+{
+    TEST_SIG = Q_USER_SIG,  // offset the first signal by Q_USER_SIG (4)
+    /* insert other published signals above ... */
+    MAX_PUB_SIG,                // the last published signal
+    TIMEOUT_SIG,
+    MAX_SIG                     //keep last (the number of signals) */
+};
+
+/* product behaviour active object(s) used in this application -------------------------------*/
+
+$declare${Shared}
+
+#endif // QMODEL_H</text>
+  </file>
+ </directory>
+</model>
