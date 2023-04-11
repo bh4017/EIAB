@@ -21,6 +21,7 @@
 /** INCLUDES -------------------------------------------------------------- **/
 #include "bsp.h"
 #include "gpio.h"
+#include "usart.h"
 #include "stm32g4xx_hal.h"
 #include "qpc.h"
 
@@ -55,6 +56,7 @@ void SystemClock_Config(void);
 void BSP_Error_Handler(void);
 void SysTick_Handler(void);
 void USART2_IRQHandler(void);
+void Peripheral_Init(void);
 
 
 
@@ -90,7 +92,7 @@ void BSP_Init(void)
     SystemClock_Config();
 
     /* INITIALISE PERIPHERALS */
-    GPIO_Init();
+    Peripheral_Init();
 
 }
 
@@ -157,6 +159,17 @@ void BSP_Error_Handler(void)
     }
 }
 
+/*
+ ******************************************************************************
+ * @brief  Peripheral_Init - Initialises all peripherals to default state
+ * @retval None
+ ******************************************************************************
+*/
+void Peripheral_Init(void)
+{
+    GPIO_Init();
+
+}
 
 /*
  ******************************************************************************
@@ -175,14 +188,13 @@ void QF_onStartup(void)
     * Assign a priority to EVERY ISR explicitly by calling NVIC_SetPriority().
     * DO NOT LEAVE THE ISR PRIORITIES AT THE DEFAULT VALUE!
     */
-    NVIC_SetPriority(USART2_IRQn,    0U); /* kernel UNAWARE interrupt */
+    NVIC_SetPriority(USART1_IRQn,    0U); /* kernel UNAWARE interrupt */
     NVIC_SetPriority(SysTick_IRQn,   QF_AWARE_ISR_CMSIS_PRI + 1U);
     /* ... */
 
     /* enable IRQs... */
-    //NVIC_EnableIRQ(EXTI0_1_IRQn);
 #ifdef Q_SPY
-    NVIC_EnableIRQ(USART2_IRQn); /* UART2 interrupt used for QS-RX */
+    NVIC_EnableIRQ(USART1_IRQn); /* UART2 interrupt used for QS-RX */
 #endif
 }
 
@@ -201,7 +213,7 @@ void QV_onIdle(void)
     QF_INT_ENABLE();
     QS_rxParse();  /* parse all the received bytes */
 
-    if ((USART2->ISR & (1U << 7)) != 0) {  /* is TXE empty? */
+    if ((USART1->ISR & (1U << 7)) != 0) {  /* is TXE empty? */
         uint16_t b;
 
         QF_INT_DISABLE();
@@ -209,7 +221,7 @@ void QV_onIdle(void)
         QF_INT_ENABLE();
 
         if (b != QS_EOD) {  /* not End-Of-Data? */
-            USART2->TDR = (b & 0xFFU);  /* put into the DR register */
+            USART1->TDR = (b & 0xFFU);  /* put into the DR register */
         }
     }
 
@@ -229,6 +241,101 @@ Q_NORETURN Q_onAssert(char const * const module, int_t const loc)
     //NVIC_SystemReset();
 }
 
+/*
+ ******************************************************************************
+ * @brief  QS_onCommand - QS User Command Callback to be implemented in BSP
+ * @retval None
+ ******************************************************************************
+*/
+void QS_onCommand(uint8_t cmdId, uint32_t param1, uint32_t param2, uint32_t param3)
+{
+    // Need to understand more about user commands.  For now this function is
+    // unimplemented.  2023-04-11 BJH.
+
+//    void assert_failed(char const *module, int loc);
+    (void) cmdId;
+    (void) param1;
+    (void) param2;
+    (void) param3;
+
+//    QS_BEGIN_ID(COMMAND_STAT, 0U)
+//    /* app-specific record */
+//            QS_U8(2, cmdId);
+//            QS_U32(8, param1);
+//            QS_U32(8, param2);
+//            QS_U32(8, param3);QS_END()
+//
+//    if (cmdId == 10U)
+//    {
+//        Q_ERROR();
+//    }
+//    else if (cmdId == 11U)
+//    {
+//        assert_failed("QS_onCommand", 123);
+//    }
+}
+
+/*
+ ******************************************************************************
+ * @brief  QS_onCleanup - QS OnCleanup Callback to be implemented in BSP
+ * @retval None
+ ******************************************************************************
+*/
+void QS_onCleanup(void)
+{
+
+}
+
+/*
+ ******************************************************************************
+ * @brief  QS_onReset - QS OnReset Callback to be implemented in BSP
+ * @retval None
+ ******************************************************************************
+*/
+void QS_onReset(void)
+{
+    NVIC_SystemReset();
+}
+
+/*
+ ******************************************************************************
+ * @brief  QS_onFlush - QS OnFlush Callback to be implemented in BSP
+ * @retval None
+ ******************************************************************************
+*/
+void QS_onFlush(void)
+{
+    uint16_t b;
+
+    QF_INT_DISABLE();
+    while ((b = QS_getByte()) != QS_EOD)
+    {
+        /* while not End-Of-Data... */
+        QF_INT_ENABLE();
+        while ((USART1->ISR & (1U << 7)) == 0U)
+        {
+            /* while TXE not empty */
+        }
+        USART1->TDR  = (b & 0xFFU);  /* put into the DR register */
+        QF_INT_DISABLE();
+    }
+    QF_INT_ENABLE();
+}
+
+QSTimeCtr QS_onGetTime(void)
+{
+    /* NOTE: invoked with interrupts DISABLED */
+    if ((SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk) == 0)
+    {
+        /* not set? */
+        return QS_tickTime_ - (QSTimeCtr) SysTick->VAL;
+    }
+    else
+    {
+        /* the rollover occured, but the SysTick_ISR did not run yet */
+        return QS_tickTime_ + QS_tickPeriod_ - (QSTimeCtr) SysTick->VAL;
+    }
+}
 
 /*
  ******************************************************************************
@@ -253,7 +360,7 @@ void SysTick_Handler(void)
 
 #ifdef Q_SPY
     {
-        tmp = SysTick->CTRL; /* clear CTRL_COUNTFLAG */
+        uint32_t volatile tmp = SysTick->CTRL; /* clear CTRL_COUNTFLAG */
         QS_tickTime_ += QS_tickPeriod_; /* account for the clock rollover */
     }
 #endif
@@ -263,4 +370,28 @@ void SysTick_Handler(void)
 
 
     QV_ARM_ERRATUM_838869();
+}
+
+
+/*
+ ******************************************************************************
+ * @brief  QS_onStartup - Startup code for QSPY
+ * @retval uint8_t
+ ******************************************************************************
+*/
+uint8_t QS_onStartup(void const *arg)
+{
+    static uint8_t qsTxBuf[2 * 1024]; /* buffer for QS transmit channel */
+    static uint8_t qsRxBuf[256]; /* buffer for QS receive channel */
+
+    (void) arg; /* avoid the "unused parameter" compiler warning */
+
+    QS_initBuf(qsTxBuf, sizeof(qsTxBuf));
+    QS_rxInitBuf(qsRxBuf, sizeof(qsRxBuf));
+
+    USART1_Init();
+
+    QS_tickPeriod_ = SystemCoreClock / BSP_TICKS_PER_SEC;
+    QS_tickTime_ = QS_tickPeriod_; /* to start the timestamp at zero */
+    return 1U; /* return success */
 }

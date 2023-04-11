@@ -42,6 +42,16 @@
     #define DO_BLINK_LED_PIN LL_GPIO_PIN_5
     #define DO_BLINK_LED_PRT GPIOA
 
+    /* USART 1
+     * PA9  --> USART1_TX
+     * PA10 --> USART1_RX
+     */
+    #define USART1_PORT   GPIOA
+    #define USART1_AFMODE LL_GPIO_AF_7
+    #define USART1_TX_PIN LL_GPIO_PIN_9
+    #define USART1_RX_PIN LL_GPIO_PIN_10
+
+
 
 
 /** PUBLIC FUNCTION PROTOTYPES -------------------------------------------- **/
