@@ -1,64 +1,50 @@
-/* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file    stm32g4xx_it.c
-  * @brief   Interrupt Service Routines.
-  ******************************************************************************
+/*
+  *****************************************************************************
+  * @file           : stm32g4xx_it.c
+  * @author         : Brian J Hoskins
+  * @date           : 2023-04-12
+  * @brief          : Implements the interrupt handlers for the STM32
+  *                   peripherals
+  *****************************************************************************
   * @attention
   *
-  * Copyright (c) 2023 STMicroelectronics.
+  * Copyright (c) 2023 Brian Hoskins.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
   * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
-  ******************************************************************************
-  */
-/* USER CODE END Header */
+  *****************************************************************************
+*/
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32g4xx_it.h"
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-/* USER CODE END Includes */
+#include "usart.h"
+#include "stm32g4xx_ll_usart.h"
+#include "qpc.h"
 
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN TD */
 
-/* USER CODE END TD */
 
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
+/*
+ ******************************************************************************
+ * @brief  USART1_IRQHandler - handles USART1 interrupts.
+ *         USART1 is used exclusively for QSPY.
+ * @retval None
+ ******************************************************************************
+*/
+void USART1_IRQHandler(void)
+{
+    /* used in QS-RX (kernel UNAWARE interrupt) */
+    /* is RX register NOT empty? */
+    if (LL_USART_IsActiveFlag_RXNE(USART1))
+    {
+        uint32_t b = LL_USART_ReceiveData8(USART1);
+        QS_RX_PUT(b);
+    }
+}
 
-/* USER CODE END PD */
 
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
-/* USER CODE BEGIN PFP */
-
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
-
-/* External variables --------------------------------------------------------*/
-
-/* USER CODE BEGIN EV */
-
-/* USER CODE END EV */
 
 /******************************************************************************/
 /*           Cortex-M4 Processor Interruption and Exception Handlers          */

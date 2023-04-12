@@ -80,6 +80,11 @@ static void Blinky_ctor(Blinky * const me) {
 /*.${AOs::Blinky::SM} ......................................................*/
 static QState Blinky_initial(Blinky * const me, void const * const par) {
     /*.${AOs::Blinky::SM::initial} */
+
+    QS_FUN_DICTIONARY(&Blinky_active);
+    QS_FUN_DICTIONARY(&Blinky_off);
+    QS_FUN_DICTIONARY(&Blinky_on);
+
     return Q_TRAN(&Blinky_active);
 }
 /*.${AOs::Blinky::SM::active} ..............................................*/

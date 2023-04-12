@@ -68,7 +68,7 @@ void BSP_Error_Handler(void);
 void SysTick_Handler(void);
 void USART2_IRQHandler(void);
 void Peripheral_Init(void);
-
+void BSP_Peripheral_IRQ_Init(void);
 
 
 /*
@@ -90,6 +90,31 @@ void BSP_SetBlinkyLED(ON_OFF_STATUS status)
     }
 }
 
+/*
+ ******************************************************************************
+ * @brief  BSP_Peripheral_IRQ_Init - Sets up the peripheral interrupts and
+ *         associated priorities.
+ * @retval None
+ ******************************************************************************
+*/
+void BSP_Peripheral_IRQ_Init(void)
+{
+       /* set priorities of ALL ISRs used in the system, see NOTE00
+        *
+        * !!!!!!!!!!!!!!!!!!!!!!!!!!!! CAUTION !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        * Assign a priority to EVERY ISR explicitly by calling NVIC_SetPriority().
+        * DO NOT LEAVE THE ISR PRIORITIES AT THE DEFAULT VALUE!
+        */
+
+    /* USART1 INTERRUPT INIT FOR QSPY*/
+    NVIC_SetPriority(USART1_IRQn, 0); // kernel UNAWARE interrupt
+    #ifdef Q_SPY
+    NVIC_EnableIRQ(USART1_IRQn);
+    #endif
+
+    /* SYSTICK */
+    NVIC_SetPriority(SysTick_IRQn,   QF_AWARE_ISR_CMSIS_PRI + 1U);
+}
 
 /*
  ******************************************************************************
@@ -119,7 +144,7 @@ void BSP_Init(void)
 
     // QSPY filters
     QS_FILTER_OFF(QS_ALL_RECORDS);  // Turn off all records
-    QS_FILTER_ON(QS_SM_RECORDS);    // Turn on global state machine records (all SMs)
+    //QS_FILTER_ON(QS_SM_RECORDS);    // Turn on global state machine records (all SMs)
     //QS_FILTER_ON(QS_AO_RECORDS);    // Turn on global active object records (all AOs)
 
 }
@@ -212,17 +237,8 @@ void QF_onStartup(void)
     /* set up the SysTick timer to fire at BSP_TICKS_PER_SEC rate */
     SysTick_Config(SystemCoreClock / BSP_TICKS_PER_SEC);
 
-    /* set priorities of ALL ISRs used in the system, see NOTE00
-    *
-    * !!!!!!!!!!!!!!!!!!!!!!!!!!!! CAUTION !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    * Assign a priority to EVERY ISR explicitly by calling NVIC_SetPriority().
-    * DO NOT LEAVE THE ISR PRIORITIES AT THE DEFAULT VALUE!
-    */
-    NVIC_SetPriority(USART1_IRQn,    0U); /* kernel UNAWARE interrupt */
-    NVIC_SetPriority(SysTick_IRQn,   QF_AWARE_ISR_CMSIS_PRI + 1U);
-    /* ... */
+    BSP_Peripheral_IRQ_Init();
 
-    /* enable IRQs... */
 #ifdef Q_SPY
     NVIC_EnableIRQ(USART1_IRQn); /* UART2 interrupt used for QS-RX */
 #endif

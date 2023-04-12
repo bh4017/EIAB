@@ -20,7 +20,7 @@
     <code>QActive_ctor(&amp;me-&gt;super, Q_STATE_CAST(&amp;Blinky_initial));
 QTimeEvt_ctorX(&amp;me-&gt;timeEvt, &amp;me-&gt;super, TIMEOUT_SIG, 0U);</code>
    </operation>
-   <statechart properties="0x01">
+   <statechart properties="0x03">
     <initial target="../1">
      <initial_glyph conn="2,6,5,3,6">
       <action box="0,-2,10,2"/>
