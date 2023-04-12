@@ -34,6 +34,7 @@
 #include "gpio.h"
 #include "usart.h"
 #include "qpc.h"
+#include "qmodel.h"
 
 Q_DEFINE_THIS_FILE
 
@@ -70,22 +71,22 @@ void Peripheral_Init(void);
 
 
 
-
+/*
+ ******************************************************************************
+ * @brief  BSP_SetBlinkyLED - Set blinky LED (on/off).
+ * @param  ON_OFF_STATUS status - ON = switch LED on, OFF = switch LED OFF.
+ * @retval None - errors here are intolerable & will call Error_Handler().
+ ******************************************************************************
+*/
 void BSP_SetBlinkyLED(ON_OFF_STATUS status)
 {
     if(status == ON)
     {
         LL_GPIO_SetOutputPin(DO_BLINK_LED_PRT, DO_BLINK_LED_PIN);
-        while (!LL_USART_IsActiveFlag_TXE(USART1)){}
-        LL_USART_TransmitData8(USART1, 0x31);
-        LL_USART_ClearFlag_TC(USART1);
     }
     else
     {
         LL_GPIO_ResetOutputPin(DO_BLINK_LED_PRT, DO_BLINK_LED_PIN);
-        while (!LL_USART_IsActiveFlag_TXE(USART1)){}
-        LL_USART_TransmitData8(USART1, 0x30);
-        LL_USART_ClearFlag_TC(USART1);
     }
 }
 
@@ -104,6 +105,22 @@ void BSP_Init(void)
 
     /* INITIALISE PERIPHERALS */
     Peripheral_Init();
+
+    /* INITIALISE QSPY */
+    if (QS_INIT((void *)0) == 0U)
+    {
+        Q_ERROR();
+    }
+    // Object dictionaries
+    QS_OBJ_DICTIONARY(AO_Blinky);
+
+    // Signal dictionaries
+    QS_SIG_DICTIONARY(TIMEOUT_SIG, (void* )0);
+
+    // QSPY filters
+    QS_FILTER_OFF(QS_ALL_RECORDS);  // Turn off all records
+    QS_FILTER_ON(QS_SM_RECORDS);    // Turn on global state machine records (all SMs)
+    //QS_FILTER_ON(QS_AO_RECORDS);    // Turn on global active object records (all AOs)
 
 }
 
