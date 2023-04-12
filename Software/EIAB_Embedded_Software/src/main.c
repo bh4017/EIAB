@@ -22,7 +22,6 @@
 #include "qmodel.h"
 #include "main.h"
 #include "bsp.h"
-#include "stm32g4xx_hal.h"
 
 Q_DEFINE_THIS_FILE
 /* TYPEDEFS ---------------------------------------------------------------- */

@@ -19,10 +19,20 @@
 */
 
 /** INCLUDES -------------------------------------------------------------- **/
+#include "stm32g4xx_ll_rcc.h"
+#include "stm32g4xx_ll_bus.h"
+#include "stm32g4xx_ll_crs.h"
+#include "stm32g4xx_ll_system.h"
+#include "stm32g4xx_ll_exti.h"
+#include "stm32g4xx_ll_cortex.h"
+#include "stm32g4xx_ll_utils.h"
+#include "stm32g4xx_ll_pwr.h"
+#include "stm32g4xx_ll_dma.h"
+#include "stm32g4xx_ll_usart.h"
+#include "stm32g4xx_ll_gpio.h"
 #include "bsp.h"
 #include "gpio.h"
 #include "usart.h"
-#include "stm32g4xx_hal.h"
 #include "qpc.h"
 
 Q_DEFINE_THIS_FILE
@@ -66,10 +76,16 @@ void BSP_SetBlinkyLED(ON_OFF_STATUS status)
     if(status == ON)
     {
         LL_GPIO_SetOutputPin(DO_BLINK_LED_PRT, DO_BLINK_LED_PIN);
+        while (!LL_USART_IsActiveFlag_TXE(USART1)){}
+        LL_USART_TransmitData8(USART1, 0x31);
+        LL_USART_ClearFlag_TC(USART1);
     }
     else
     {
         LL_GPIO_ResetOutputPin(DO_BLINK_LED_PRT, DO_BLINK_LED_PIN);
+        while (!LL_USART_IsActiveFlag_TXE(USART1)){}
+        LL_USART_TransmitData8(USART1, 0x30);
+        LL_USART_ClearFlag_TC(USART1);
     }
 }
 
@@ -82,11 +98,6 @@ void BSP_SetBlinkyLED(ON_OFF_STATUS status)
 */
 void BSP_Init(void)
 {
-    /* INIT HAL */
-    if(HAL_Init() != HAL_OK)
-    {
-        BSP_Error_Handler();
-    }
 
     /* CONFIGURE SYSTEM CLOCK */
     SystemClock_Config();
@@ -104,44 +115,46 @@ void BSP_Init(void)
 */
 void SystemClock_Config(void)
 {
-    RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-
-    /** Configure the main internal regulator output voltage
-    */
-    HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1_BOOST);
-
-    /** Initializes the RCC Oscillators according to the specified parameters
-    * in the RCC_OscInitTypeDef structure.
-    */
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-    RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-    RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV4;
-    RCC_OscInitStruct.PLL.PLLN = 85;
-    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-    RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
-    RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
-    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+    LL_FLASH_SetLatency(LL_FLASH_LATENCY_4);
+    while(LL_FLASH_GetLatency() != LL_FLASH_LATENCY_4)
     {
-        BSP_Error_Handler();
+    }
+    LL_PWR_EnableRange1BoostMode();
+    LL_RCC_HSI_Enable();
+    /* Wait till HSI is ready */
+    while(LL_RCC_HSI_IsReady() != 1)
+    {
     }
 
-    /** Initializes the CPU, AHB and APB buses clocks
-    */
-    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-
-    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
+    LL_RCC_HSI_SetCalibTrimming(64);
+    LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSI, LL_RCC_PLLM_DIV_4, 85, LL_RCC_PLLR_DIV_2);
+    LL_RCC_PLL_EnableDomain_SYS();
+    LL_RCC_PLL_Enable();
+    /* Wait till PLL is ready */
+    while(LL_RCC_PLL_IsReady() != 1)
     {
-        BSP_Error_Handler();
     }
+
+    LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_PLL);
+    LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_2);
+    /* Wait till System clock is ready */
+    while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_PLL)
+    {
+    }
+
+    /* Insure 1�s transition state at intermediate medium speed clock based on DWT */
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+    DWT->CYCCNT = 0;
+    while(DWT->CYCCNT < 100);
+    /* Set AHB prescaler*/
+    LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
+    LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_1);
+    LL_RCC_SetAPB2Prescaler(LL_RCC_APB2_DIV_1);
+
+    LL_Init1msTick(170000000);
+
+    LL_SetSystemCoreClock(170000000);
 }
 
 
@@ -168,7 +181,7 @@ void BSP_Error_Handler(void)
 void Peripheral_Init(void)
 {
     GPIO_Init();
-
+    USART1_Init();
 }
 
 /*
@@ -240,6 +253,9 @@ Q_NORETURN Q_onAssert(char const * const module, int_t const loc)
     while(1); //TODO: Add an assertion handler here
     //NVIC_SystemReset();
 }
+
+/* BEGIN QSPY CALLBACKS=======================================================*/
+#ifdef Q_SPY
 
 /*
  ******************************************************************************
@@ -339,6 +355,32 @@ QSTimeCtr QS_onGetTime(void)
 
 /*
  ******************************************************************************
+ * @brief  QS_onStartup - Startup code for QSPY
+ * @retval uint8_t
+ ******************************************************************************
+*/
+uint8_t QS_onStartup(void const *arg)
+{
+    static uint8_t qsTxBuf[2 * 1024]; /* buffer for QS transmit channel */
+    static uint8_t qsRxBuf[256]; /* buffer for QS receive channel */
+
+    (void) arg; /* avoid the "unused parameter" compiler warning */
+
+    QS_initBuf(qsTxBuf, sizeof(qsTxBuf));
+    QS_rxInitBuf(qsRxBuf, sizeof(qsRxBuf));
+
+    //USART1_Init();
+
+    QS_tickPeriod_ = SystemCoreClock / BSP_TICKS_PER_SEC;
+    QS_tickTime_ = QS_tickPeriod_; /* to start the timestamp at zero */
+    return 1U; /* return success */
+}
+
+#endif // Q_SPY
+/* END QSPY CALLBACKS=======================================================*/
+
+/*
+ ******************************************************************************
  * @brief  QF_onCleanup - QP Framework cleanup
  * @retval None
  ******************************************************************************
@@ -356,7 +398,7 @@ void QF_onCleanup(void)
 void SysTick_Handler(void)
 {
     /* system clock tick ISR */
-    HAL_IncTick();
+    //HAL_IncTick();
 
 #ifdef Q_SPY
     {
@@ -370,28 +412,4 @@ void SysTick_Handler(void)
 
 
     QV_ARM_ERRATUM_838869();
-}
-
-
-/*
- ******************************************************************************
- * @brief  QS_onStartup - Startup code for QSPY
- * @retval uint8_t
- ******************************************************************************
-*/
-uint8_t QS_onStartup(void const *arg)
-{
-    static uint8_t qsTxBuf[2 * 1024]; /* buffer for QS transmit channel */
-    static uint8_t qsRxBuf[256]; /* buffer for QS receive channel */
-
-    (void) arg; /* avoid the "unused parameter" compiler warning */
-
-    QS_initBuf(qsTxBuf, sizeof(qsTxBuf));
-    QS_rxInitBuf(qsRxBuf, sizeof(qsRxBuf));
-
-    USART1_Init();
-
-    QS_tickPeriod_ = SystemCoreClock / BSP_TICKS_PER_SEC;
-    QS_tickTime_ = QS_tickPeriod_; /* to start the timestamp at zero */
-    return 1U; /* return success */
 }
