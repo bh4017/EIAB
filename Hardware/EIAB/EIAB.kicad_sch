@@ -1,0 +1,48 @@
+(kicad_sch (version 20230121) (generator eeschema)
+
+  (uuid 6d25b8e5-6ec4-465f-9602-aeeccf12e888)
+
+  (paper "A4")
+
+  (lib_symbols
+  )
+
+
+  (sheet (at 22.86 63.5) (size 44.45 35.56) (fields_autoplaced)
+    (stroke (width 0.1524) (type solid))
+    (fill (color 0 0 0 0.0000))
+    (uuid 06e93352-bce9-4036-9bf7-0b751abe42a8)
+    (property "Sheetname" "Power" (at 22.86 62.7884 0)
+      (effects (font (size 1.27 1.27)) (justify left bottom))
+    )
+    (property "Sheetfile" "power.kicad_sch" (at 22.86 99.6446 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+    (instances
+      (project "EIAB"
+        (path "/6d25b8e5-6ec4-465f-9602-aeeccf12e888" (page "3"))
+      )
+    )
+  )
+
+  (sheet (at 22.86 19.05) (size 44.45 35.56) (fields_autoplaced)
+    (stroke (width 0.1524) (type solid))
+    (fill (color 0 0 0 0.0000))
+    (uuid bce35ac8-89b0-43cb-99d9-08d4eef7874f)
+    (property "Sheetname" "Microcontroller" (at 22.86 18.3384 0)
+      (effects (font (size 1.27 1.27)) (justify left bottom))
+    )
+    (property "Sheetfile" "microcontroller.kicad_sch" (at 22.86 55.1946 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+    (instances
+      (project "EIAB"
+        (path "/6d25b8e5-6ec4-465f-9602-aeeccf12e888" (page "2"))
+      )
+    )
+  )
+
+  (sheet_instances
+    (path "/" (page "1"))
+  )
+)
